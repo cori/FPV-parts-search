@@ -1,0 +1,37 @@
+manifest_version = 2
+service_id = ""
+name = "fpv-deal-hunter-edge"
+language = "rust"
+
+[local_server]
+  [local_server.backends]
+    [local_server.backends.getfpv]
+      url = "https://www.getfpv.com"
+    [local_server.backends.racedayquads]
+      url = "https://www.racedayquads.com"
+    [local_server.backends.pyrodrone]
+      url = "https://pyrodrone.com"
+    [local_server.backends.newbeedrone]
+      url = "https://newbeedrone.com"
+    [local_server.backends.defiancerc]
+      url = "https://www.defiancerc.com"
+    [local_server.backends.tinywhoop]
+      url = "https://www.tinywhoop.com"
+    [local_server.backends.wrekd]
+      url = "https://wrekd.com"
+    [local_server.backends.webleedfpv]
+      url = "https://webleedfpv.com"
+    [local_server.backends.five33]
+      url = "https://flyfive33.com"
+    [local_server.backends.betafpv]
+      url = "https://betafpv.com"
+    [local_server.backends.progressiverc]
+      url = "https://www.progressiverc.com"
+    [local_server.backends.emax]
+      url = "https://emax-usa.com"
+    [local_server.backends.rotorriot]
+      url = "https://rotorriot.com"
+    [local_server.backends.stanfpv]
+      url = "https://stanfpv.com"
+    [local_server.backends.ovonic]
+      url = "https://us.ovonicshop.com"

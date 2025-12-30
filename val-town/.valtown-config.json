@@ -1,0 +1,8 @@
+{
+  "name": "fpv-deal-hunter",
+  "description": "FPV parts deal aggregator - scrapes clearance pages from multiple vendors",
+  "entry": "index.js",
+  "type": "http",
+  "public": true,
+  "readme": "README.md"
+}

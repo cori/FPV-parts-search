@@ -1,0 +1,14 @@
+{
+  "name": "fpv-deal-hunter",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "FPV parts deal aggregator for Val.town",
+  "scripts": {
+    "test": "node --test **/*.test.js",
+    "test:watch": "node --test --watch **/*.test.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {}
+}

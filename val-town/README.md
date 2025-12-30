@@ -1,26 +1,29 @@
 # FPV Deal Hunter - Val.town Edition
 
-A serverless FPV drone parts deal aggregator that scrapes clearance pages from multiple vendors and presents them in a unified dashboard.
+A serverless FPV drone parts deal aggregator that scrapes clearance pages from multiple vendors and presents them in a unified dashboard. Now with full catalog search!
 
 ## Features
 
-- ✅ **Parallel Scraping**: Fetches deals from 6 FPV vendors concurrently
-- ✅ **Smart Caching**: 15-minute TTL cache to reduce load on vendor sites
+- ✅ **Catalog Search**: Search across all vendor catalogs for specific products
+- ✅ **Smart Defaults**: Shows clearance deals by default, search on demand
+- ✅ **Parallel Scraping**: Fetches from 7 FPV vendors concurrently
+- ✅ **Smart Caching**: 15-minute TTL cache (separate for clearance and searches)
 - ✅ **Error Tracking**: Reports failed vendor fetches with direct links
 - ✅ **Responsive UI**: Alpine.js + Tailwind CSS dashboard (no React!)
 - ✅ **Polite Scraping**: Respectful headers and rate limiting
-- ✅ **TDD Development**: Comprehensive test coverage (19 tests)
+- ✅ **TDD Development**: Comprehensive test coverage (28 tests)
 
 ## Vendors
 
 The following independent FPV vendors are currently supported:
 
-1. **GetFPV** - Clearance section
-2. **RaceDayQuads** - Clearance collection
-3. **Pyrodrone** - Clearance collection
-4. **NewBeeDrone** - Clearance collection
-5. **TinyWhoop** - Clearance collection
-6. **RotorRiot** - Clearance sale
+1. **GetFPV** - Clearance + Full catalog search
+2. **RaceDayQuads** - Clearance + Full catalog search
+3. **Pyrodrone** - Clearance + Full catalog search
+4. **NewBeeDrone** - Clearance + Full catalog search
+5. **TinyWhoop** - Clearance + Full catalog search
+6. **RotorRiot** - Clearance + Full catalog search
+7. **Webleedfpv** - Clearance + Full catalog search
 
 ## Project Structure
 
@@ -63,8 +66,9 @@ npm run test:watch
 - **7 scraper tests**: Price normalization, URL handling, HTML parsing
 - **6 fetcher tests**: Parallel fetching, error handling, caching
 - **6 handler tests**: HTTP routing, CORS, API responses
+- **9 vendor tests**: URL building, search query encoding, vendor configuration
 
-**Total: 19 tests, all passing ✅**
+**Total: 28 tests, all passing ✅**
 
 ## Deploying to Val.town
 
@@ -109,14 +113,20 @@ valtown deploy index.js
 
 ### `GET /`
 
-Returns the dashboard HTML interface.
+Returns the dashboard HTML interface with search functionality.
 
 ### `GET /api/deals`
 
-Returns JSON with all deals.
+Returns JSON with deals - clearance by default, or search results if query provided.
 
 **Query Parameters:**
+- `q=search+term` - Search all vendors for specific products (e.g., `?q=battery` or `?q=5+inch+frame`)
 - `refresh=true` - Force fresh fetch, bypass cache
+
+**Examples:**
+- `/api/deals` - Get all clearance deals
+- `/api/deals?q=battery` - Search all vendors for "battery"
+- `/api/deals?q=camera&refresh=true` - Fresh search for "camera"
 
 **Response:**
 ```json
@@ -139,7 +149,8 @@ Returns JSON with all deals.
     }
   ],
   "cached": false,
-  "timestamp": 1234567890
+  "timestamp": 1234567890,
+  "searchQuery": "battery"
 }
 ```
 
@@ -155,13 +166,16 @@ The scraper uses polite headers:
 ## Caching Strategy
 
 - **TTL**: 15 minutes (900 seconds)
-- **Strategy**: Read-through cache
+- **Strategy**: Read-through cache with separate keys for clearance and searches
+- **Cache Keys**:
+  - `"all-deals"` for clearance items
+  - `"search-{query}"` for each unique search term
 - **Invalidation**: Manual via `?refresh=true` parameter
 - **Storage**: In-memory (local) or Val.town Blob (production)
 
 ## Adding New Vendors
 
-1. Identify the clearance/sale page URL
+1. Identify the clearance/sale page URL and search URL pattern
 2. Inspect HTML structure to find CSS selectors for:
    - Product card container
    - Title
@@ -174,6 +188,7 @@ The scraper uses polite headers:
 {
   name: "VendorName",
   url: "/collections/clearance",
+  searchUrl: "/search?q={query}",  // {query} will be replaced with search term
   base_url: "https://vendor.com",
   selectors: {
     card: ".product-card",
@@ -193,8 +208,9 @@ The scraper uses polite headers:
 - **Parallel Fetching**: All vendors fetched concurrently
 - **Typical Response Time**: 2-5 seconds (uncached)
 - **Cached Response**: <100ms
-- **Vendors Scanned**: 6 stores
-- **Average Deals**: 50-200 items
+- **Vendors Scanned**: 7 stores
+- **Average Clearance Deals**: 50-200 items
+- **Search Results**: Varies by query (10-500+ items)
 
 ## Architecture Decisions
 

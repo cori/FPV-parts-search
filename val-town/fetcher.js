@@ -1,5 +1,5 @@
 import { parseVendorResponse } from "./scraper.js";
-import { VENDORS } from "./vendors.js";
+import { VENDORS, buildVendorUrl } from "./vendors.js";
 import { getCache, setCache } from "./cache.js";
 
 /**
@@ -11,10 +11,11 @@ const USER_AGENT =
 /**
  * Fetch deals from a single vendor
  * @param {Object} vendor - Vendor configuration
+ * @param {string} searchQuery - Search term (empty for clearance)
  * @returns {Promise<Object>} Result with deals array and optional error
  */
-export async function fetchVendor(vendor) {
-  const url = vendor.base_url + vendor.url;
+export async function fetchVendor(vendor, searchQuery = "") {
+  const url = buildVendorUrl(vendor, searchQuery);
 
   try {
     const response = await fetch(url, {
@@ -57,11 +58,13 @@ export async function fetchVendor(vendor) {
 
 /**
  * Fetch deals from all vendors in parallel
+ * @param {string} searchQuery - Search term (empty for clearance)
  * @param {boolean} skipCache - Force fresh fetch, bypassing cache
  * @returns {Promise<Object>} Response with deals, failed vendors, and metadata
  */
-export async function fetchAllVendors(skipCache = false) {
-  const CACHE_KEY = "all-deals";
+export async function fetchAllVendors(searchQuery = "", skipCache = false) {
+  // Use different cache keys for search vs clearance
+  const CACHE_KEY = searchQuery ? `search-${searchQuery}` : "all-deals";
 
   // Check cache first
   if (!skipCache) {
@@ -77,7 +80,9 @@ export async function fetchAllVendors(skipCache = false) {
   const startTime = Date.now();
 
   // Fetch from all vendors in parallel
-  const results = await Promise.all(VENDORS.map((vendor) => fetchVendor(vendor)));
+  const results = await Promise.all(
+    VENDORS.map((vendor) => fetchVendor(vendor, searchQuery))
+  );
 
   // Separate successful and failed fetches
   const deals = [];
@@ -103,6 +108,7 @@ export async function fetchAllVendors(skipCache = false) {
     failed,
     cached: false,
     timestamp: startTime,
+    searchQuery: searchQuery || null,
   };
 
   // Store in cache

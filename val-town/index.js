@@ -65,24 +65,64 @@ function getDashboardHTML() {
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="relative">
-                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-500"></i>
-                <input type="text" x-model="search" placeholder="Search deals..." class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 pl-10 pr-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <!-- Search and Filters -->
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg mb-8">
+            <!-- Backend Search -->
+            <div class="mb-4">
+                <form @submit.prevent="performSearch()" class="flex gap-2">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-search absolute left-3 top-3 text-gray-500"></i>
+                        <input
+                            type="text"
+                            x-model="searchInput"
+                            placeholder="Search all vendors (e.g., 'battery', 'camera', '5 inch frame')..."
+                            class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 pl-10 pr-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            @keydown.enter.prevent="performSearch()"
+                        >
+                    </div>
+                    <button
+                        type="submit"
+                        class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm transition-colors shadow-lg whitespace-nowrap"
+                        :disabled="loading"
+                    >
+                        <i class="fa-solid fa-search mr-2"></i>Search
+                    </button>
+                    <button
+                        type="button"
+                        @click="clearSearch()"
+                        x-show="currentSearch"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </form>
+                <div x-show="currentSearch" class="mt-2 text-sm text-gray-400">
+                    Searching for: <span class="text-emerald-400 font-semibold" x-text="currentSearch"></span>
+                </div>
+                <div x-show="!currentSearch" class="mt-2 text-sm text-gray-500">
+                    <i class="fa-solid fa-info-circle mr-1"></i> Showing clearance items. Enter a search term to browse full catalogs.
+                </div>
             </div>
-            <div>
-                <select x-model="sortBy" class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 px-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <option value="priceLow">Price: Low to High</option>
-                    <option value="priceHigh">Price: High to Low</option>
-                    <option value="vendor">Sort by Vendor</option>
-                </select>
-            </div>
-            <div>
-                <select x-model="vendorFilter" class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 px-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <option value="all">All Vendors</option>
-                    <template x-for="v in vendorsList" :key="v"><option :value="v" x-text="v"></option></template>
-                </select>
+
+            <!-- Client-side Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="relative">
+                    <i class="fa-solid fa-filter absolute left-3 top-3 text-gray-500"></i>
+                    <input type="text" x-model="filterText" placeholder="Filter results..." class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 pl-10 pr-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <select x-model="sortBy" class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 px-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="priceLow">Price: Low to High</option>
+                        <option value="priceHigh">Price: High to Low</option>
+                        <option value="vendor">Sort by Vendor</option>
+                    </select>
+                </div>
+                <div>
+                    <select x-model="vendorFilter" class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 px-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="all">All Vendors</option>
+                        <template x-for="v in vendorsList" :key="v"><option :value="v" x-text="v"></option></template>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -122,15 +162,17 @@ function getDashboardHTML() {
                 failed: [],
                 cached: false,
                 loading: true,
-                search: '',
+                searchInput: '',
+                currentSearch: '',
+                filterText: '',
                 sortBy: 'priceLow',
                 vendorFilter: 'all',
                 get vendorsList() { return [...new Set(this.deals.map(d => d.vendor))].sort(); },
                 get filteredDeals() {
                     let result = this.deals;
                     if (this.vendorFilter !== 'all') result = result.filter(d => d.vendor === this.vendorFilter);
-                    if (this.search) {
-                        const q = this.search.toLowerCase();
+                    if (this.filterText) {
+                        const q = this.filterText.toLowerCase();
                         result = result.filter(d => d.title.toLowerCase().includes(q));
                     }
                     return result.sort((a, b) => {
@@ -140,16 +182,18 @@ function getDashboardHTML() {
                         return 0;
                     });
                 },
-                async init() { await this.refreshData(); },
-                async refreshData() {
+                async init() { await this.loadDeals(); },
+                async loadDeals(query = '') {
                     this.loading = true;
                     try {
-                        const res = await fetch('/api/deals');
+                        const url = query ? '/api/deals?q=' + encodeURIComponent(query) : '/api/deals';
+                        const res = await fetch(url);
                         if(res.ok) {
                             const data = await res.json();
                             this.deals = data.deals;
                             this.failed = data.failed || [];
                             this.cached = data.cached || false;
+                            this.currentSearch = query;
                         }
                     } catch (e) {
                         console.error(e);
@@ -157,6 +201,18 @@ function getDashboardHTML() {
                     finally {
                         this.loading = false;
                     }
+                },
+                async performSearch() {
+                    const query = this.searchInput.trim();
+                    await this.loadDeals(query);
+                },
+                async clearSearch() {
+                    this.searchInput = '';
+                    this.currentSearch = '';
+                    await this.loadDeals();
+                },
+                async refreshData() {
+                    await this.loadDeals(this.currentSearch);
                 }
             }))
         })
@@ -199,8 +255,9 @@ export default async function handler(req) {
   // Route: API - Get deals
   if (path === "/api/deals") {
     try {
+      const searchQuery = url.searchParams.get("q") || "";
       const skipCache = url.searchParams.get("refresh") === "true";
-      const data = await fetchAllVendors(skipCache);
+      const data = await fetchAllVendors(searchQuery, skipCache);
 
       return new Response(JSON.stringify(data), {
         headers: {

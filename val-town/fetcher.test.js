@@ -82,7 +82,7 @@ test("fetchVendor - handles non-200 responses", async () => {
 });
 
 test("fetchAllVendors - fetches from all vendors in parallel", async () => {
-  // Mock 6 vendors (matching VENDORS array length)
+  // Mock responses for all vendors (VENDORS array length)
   const mockResponses = VENDORS.map(() => ({
     ok: true,
     body: `
@@ -111,7 +111,7 @@ test("fetchAllVendors - fetches from all vendors in parallel", async () => {
 });
 
 test("fetchAllVendors - reports failed vendors", async () => {
-  // Mock responses: first 3 succeed, last 3 fail
+  // Mock responses: first 3 succeed, rest fail
   const mockResponses = [
     { ok: true, body: '<li class="product-item"><a class="product-item-link" href="/test">Product</a><span class="price">$10.00</span><a class="product-item-photo" href="/test"><img class="product-image-photo" src="/test.jpg"></a></li>' },
     { ok: true, body: '<li class="product-item"><a class="product-item-link" href="/test">Product</a><span class="price">$10.00</span><a class="product-item-photo" href="/test"><img class="product-image-photo" src="/test.jpg"></a></li>' },
@@ -119,13 +119,14 @@ test("fetchAllVendors - reports failed vendors", async () => {
     { error: "Timeout" },
     { error: "DNS error" },
     { ok: false, status: 500 },
+    { error: "Network error" },
   ];
 
   mockFetch(mockResponses);
 
   const result = await fetchAllVendors();
 
-  assert.strictEqual(result.failed.length, 3, "Should have 3 failed vendors");
+  assert.strictEqual(result.failed.length, 4, "Should have 4 failed vendors");
   assert.ok(result.deals.length > 0, "Should still have deals from successful vendors");
 
   // Check failed vendor structure
@@ -140,11 +141,12 @@ test("fetchAllVendors - reports failed vendors", async () => {
 
 test("fetchAllVendors - sorts deals by price", async () => {
   // Generate appropriate HTML for each vendor type
-  // Vendor 0: GetFPV (li.product-item), Vendor 1: RDQ (div.product-item), Vendors 2-5: Shopify (.product-card)
+  // Vendor 0: GetFPV (li.product-item), Vendor 1: RDQ (div.product-item), Vendors 2-6: Shopify (.product-card)
   const mockResponses = [
     { ok: true, body: '<li class="product-item"><a class="product-item-link" href="/test">Expensive</a><span class="price">$100.00</span><a class="product-item-photo" href="/test"><img class="product-image-photo" src="/test.jpg"></a></li>' },
     { ok: true, body: '<div class="product-item"><a class="product-item__title" href="/test">Cheap</a><span class="price">$5.00</span><div class="product-item__image-wrapper"><img src="/test.jpg"></div></div>' },
     { ok: true, body: '<div class="product-card"><div class="card__heading"><a href="/test" class="full-unstyled-link">Medium</a></div><div class="card__media"><img src="/test.jpg"></div><span class="price-item price-item--sale">$50.00</span></div>' },
+    { ok: true, body: "" },
     { ok: true, body: "" },
     { ok: true, body: "" },
     { ok: true, body: "" },

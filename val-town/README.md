@@ -244,13 +244,85 @@ The scraper uses polite headers:
 
 ## Future Improvements
 
-- [ ] Add more vendors (15+ available)
+- [ ] Add more vendors (9+ available from original implementation)
 - [ ] Price history tracking
 - [ ] Email alerts for specific products
 - [ ] Filter by category/product type
 - [ ] Persistent cache with Val.town Blob
 - [ ] Rate limiting per vendor
 - [ ] Retry logic with exponential backoff
+- [ ] Advanced search filters (price range, brand, etc.)
+- [ ] Recently searched terms history
+
+## Usage Examples
+
+### Via Dashboard
+
+1. **Browse Clearance Deals** (default behavior):
+   - Open the dashboard
+   - Automatically shows all clearance items from 7 vendors
+   - Use filters to refine: vendor dropdown, sort options, client-side text filter
+
+2. **Search for Specific Products**:
+   - Type "battery" in the search box → Click "Search"
+   - System fetches all battery-related products from all 7 vendors
+   - Results show products from regular inventory, not just clearance
+
+3. **Example Searches**:
+   - `battery` - Find all batteries
+   - `5 inch frame` - Find 5" racing frames
+   - `camera` - Find FPV cameras
+   - `vtx` - Find video transmitters
+   - `motor 2207` - Find specific motor size
+
+4. **Return to Clearance**:
+   - Click the "X" button next to search
+   - Or submit empty search
+
+### Via API
+
+```bash
+# Get all clearance deals
+curl https://your-val.val.town/api/deals
+
+# Search for batteries
+curl https://your-val.val.town/api/deals?q=battery
+
+# Search for cameras, force fresh fetch
+curl https://your-val.val.town/api/deals?q=camera&refresh=true
+
+# Complex search
+curl https://your-val.val.town/api/deals?q=5+inch+frame
+```
+
+## How It Works
+
+### Default Mode (Clearance)
+1. User loads page or calls `/api/deals`
+2. System checks cache for `"all-deals"` key
+3. If cached (< 15 min), returns cached data
+4. Otherwise, fetches clearance pages from all 7 vendors in parallel
+5. Parses HTML, normalizes data, sorts by price
+6. Caches result and returns
+
+### Search Mode
+1. User searches for "battery" or calls `/api/deals?q=battery`
+2. System checks cache for `"search-battery"` key
+3. If cached (< 15 min), returns cached data
+4. Otherwise, constructs search URLs for all vendors:
+   - GetFPV: `/catalogsearch/result/?q=battery`
+   - Others: `/search?q=battery`
+5. Fetches all search pages in parallel
+6. Parses results, normalizes, sorts by price
+7. Caches with search-specific key and returns
+
+### Error Handling
+- Failed vendors are tracked separately
+- Successful vendors still return results
+- Each failed vendor shows:
+  - Vendor name
+  - Error message
+  - Direct URL to attempt manual access
 
 ## License
 

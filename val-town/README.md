@@ -44,14 +44,48 @@ val-town/
 ### Prerequisites
 
 - Node.js 18+ (for native test runner)
+- **Optional**: Val.town CLI for easy deployment
 
-### Installation
+### Quick Start with Devcontainer
 
+This project includes a devcontainer configuration for easy setup:
+
+1. **Open in VS Code**:
+   ```bash
+   code .
+   ```
+
+2. **Reopen in Container**:
+   - Press `F1` → "Dev Containers: Reopen in Container"
+   - Or click the notification to reopen in container
+
+3. **Container includes**:
+   - Node.js 22
+   - Val.town CLI pre-installed
+   - All dependencies auto-installed
+   - Proper VS Code extensions
+
+4. **Start developing**:
+   ```bash
+   npm test        # Run tests
+   valtown --help  # Val.town CLI ready to use
+   ```
+
+### Manual Setup
+
+If not using devcontainer:
+
+**1. Install dependencies:**
 ```bash
 npm install
 ```
 
-### Running Tests
+**2. Install Val.town CLI (optional for deployment):**
+```bash
+npm install -g @valtown/sdk
+```
+
+**3. Run tests:**
 
 ```bash
 # Run all tests
@@ -72,7 +106,47 @@ npm run test:watch
 
 ## Deploying to Val.town
 
-### Option 1: Via Web Interface
+### Prerequisites
+
+Install the Val.town CLI (already included in devcontainer):
+
+```bash
+npm install -g @valtown/sdk
+```
+
+### Quick Deploy via CLI
+
+**Option 1: Using Val.town CLI (Recommended)**
+
+1. **Login to Val.town**:
+   ```bash
+   valtown login
+   ```
+
+2. **Deploy the val**:
+   ```bash
+   valtown deploy index.js --name fpv-deal-hunter
+   ```
+
+3. **Deploy supporting modules**:
+   ```bash
+   valtown deploy fetcher.js --name fpv-deal-hunter-fetcher
+   valtown deploy scraper.js --name fpv-deal-hunter-scraper
+   valtown deploy vendors.js --name fpv-deal-hunter-vendors
+   valtown deploy cache.js --name fpv-deal-hunter-cache
+   ```
+
+4. **Update imports in index.js** to reference your deployed vals:
+   ```javascript
+   import { fetchAllVendors } from "https://esm.town/v/yourname/fpv-deal-hunter-fetcher";
+   ```
+
+5. **Your val is live!**
+   - Access at: `https://yourname-fpv-deal-hunter.val.run`
+
+### Manual Deployment via Web Interface
+
+**Option 2: Via Web Interface**
 
 1. Go to [val.town](https://val.town)
 2. Create a new HTTP val
@@ -87,17 +161,34 @@ npm run test:watch
    import { fetchAllVendors } from "https://esm.town/v/yourname/fetcher";
    ```
 
-### Option 2: Via CLI (Recommended)
+### Development Workflow
+
+**Local Development:**
+```bash
+# Make changes to code
+npm test                    # Run tests
+npm run test:watch         # Watch mode for TDD
+
+# When ready to deploy
+valtown login              # First time only
+valtown deploy index.js    # Deploy main handler
+```
+
+**Environment Variables:**
+If you need to configure settings, use Val.town's environment variables:
+```bash
+valtown env set CACHE_TTL=900
+valtown env set USER_AGENT="YourCustomAgent"
+```
+
+### Updating an Existing Val
 
 ```bash
-# Install Val.town CLI
-npm install -g @valtown/sdk
+# Edit your code locally
+npm test  # Ensure tests pass
 
-# Login
-valtown login
-
-# Deploy
-valtown deploy index.js
+# Redeploy
+valtown deploy index.js --update
 ```
 
 ### Important Notes for Val.town

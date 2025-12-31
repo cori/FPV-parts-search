@@ -48,11 +48,11 @@ val-town/
 
 ### Quick Start with Devcontainer
 
-This project includes a devcontainer configuration for easy setup:
+This repository includes a devcontainer configuration that supports both the Fastly and Val.town implementations:
 
-1. **Open in VS Code**:
+1. **Open the repository in VS Code**:
    ```bash
-   code .
+   code /path/to/FPV-parts-search
    ```
 
 2. **Reopen in Container**:
@@ -60,13 +60,15 @@ This project includes a devcontainer configuration for easy setup:
    - Or click the notification to reopen in container
 
 3. **Container includes**:
-   - Node.js 22
+   - Node.js 22 (for Val.town)
+   - Rust (for Fastly Compute@Edge)
    - Val.town CLI pre-installed
-   - All dependencies auto-installed
-   - Proper VS Code extensions
+   - All npm dependencies auto-installed
+   - Proper VS Code extensions for both platforms
 
-4. **Start developing**:
+4. **Start developing the Val.town version**:
    ```bash
+   cd val-town
    npm test        # Run tests
    valtown --help  # Val.town CLI ready to use
    ```

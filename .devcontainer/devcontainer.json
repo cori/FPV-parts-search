@@ -9,7 +9,8 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
     },
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "customizations": {
     "vscode": {
@@ -25,11 +26,21 @@
         "[rust]": {
           "editor.defaultFormatter": "rust-lang.rust-analyzer"
         },
-        "javascript.updateImportsOnFileMove.enabled": "always"
+        "javascript.updateImportsOnFileMove.enabled": "always",
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
+    },
+    "codespaces": {
+      "openFiles": [
+        "val-town/README.md"
+      ]
     }
   },
-  "postCreateCommand": "cd val-town && npm install && npm install -g @valtown/sdk",
+  "onCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "cd val-town && npm test",
   "forwardPorts": [3000, 7676],
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "WORKSPACE_ROOT": "${containerWorkspaceFolder}"
+  }
 }

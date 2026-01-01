@@ -46,32 +46,57 @@ val-town/
 - Node.js 18+ (for native test runner)
 - **Optional**: Val.town CLI for easy deployment
 
-### Quick Start with Devcontainer
+### Quick Start with Devcontainer / GitHub Codespaces
 
-This repository includes a devcontainer configuration that supports both the Fastly and Val.town implementations:
+This repository includes a devcontainer configuration that works with both VS Code and GitHub Codespaces:
 
-1. **Open the repository in VS Code**:
+**For GitHub Codespaces:**
+
+1. **Create a Codespace**:
+   - Go to your GitHub repository
+   - Click "Code" → "Codespaces" → "Create codespace on main"
+   - Wait for the environment to build (2-3 minutes)
+
+2. **Authenticate with Val.town**:
+   ```bash
+   valtown login
+   # Follow the prompts to authenticate
+   ```
+
+3. **Deploy to Val.town**:
+   ```bash
+   cd val-town
+   bash deploy.sh
+   # Automatically runs tests, then deploys all modules
+   ```
+
+4. **Your val is live!**
+   - Access at: `https://yourname-fpv-deal-hunter.val.run`
+
+**For Local VS Code:**
+
+1. **Open the repository**:
    ```bash
    code /path/to/FPV-parts-search
    ```
 
 2. **Reopen in Container**:
    - Press `F1` → "Dev Containers: Reopen in Container"
-   - Or click the notification to reopen in container
+   - Wait for setup to complete
 
-3. **Container includes**:
-   - Node.js 22 (for Val.town)
-   - Rust (for Fastly Compute@Edge)
-   - Val.town CLI pre-installed
-   - All npm dependencies auto-installed
-   - Proper VS Code extensions for both platforms
-
-4. **Start developing the Val.town version**:
+3. **Deploy** (same as Codespaces):
    ```bash
-   cd val-town
-   npm test        # Run tests
-   valtown --help  # Val.town CLI ready to use
+   valtown login
+   cd val-town && bash deploy.sh
    ```
+
+**Container includes**:
+- ✅ Node.js 22 + Val.town CLI
+- ✅ Rust (for Fastly Compute@Edge)
+- ✅ GitHub CLI
+- ✅ Auto-installed dependencies
+- ✅ Deployment script ready to use
+- ✅ Helpful aliases (`vt-test`, `vt-deploy`, etc.)
 
 ### Manual Setup
 
@@ -118,37 +143,57 @@ npm install -g @valtown/sdk
 
 ### Quick Deploy via CLI
 
-**Option 1: Using Val.town CLI (Recommended)**
+**Option 1: Using Deployment Script (Recommended for Codespaces)**
+
+The easiest way to deploy, especially from GitHub Codespaces:
+
+```bash
+# 1. Login to Val.town (one time)
+valtown login
+
+# 2. Run tests and deploy everything
+cd val-town
+bash deploy.sh
+```
+
+The deploy script will:
+- ✅ Run all tests first
+- ✅ Deploy all 5 modules in order
+- ✅ Show you the live URL
+- ✅ Remind you to update imports
+
+**Option 2: Manual CLI Deployment**
+
+If you prefer manual control:
 
 1. **Login to Val.town**:
    ```bash
    valtown login
    ```
 
-2. **Deploy the val**:
+2. **Deploy each module**:
    ```bash
-   valtown deploy index.js --name fpv-deal-hunter
+   # Deploy in this order (dependencies first)
+   valtown deploy cache.js --name fpv-deal-hunter-cache --public
+   valtown deploy vendors.js --name fpv-deal-hunter-vendors --public
+   valtown deploy scraper.js --name fpv-deal-hunter-scraper --public
+   valtown deploy fetcher.js --name fpv-deal-hunter-fetcher --public
+   valtown deploy index.js --name fpv-deal-hunter --public
    ```
 
-3. **Deploy supporting modules**:
-   ```bash
-   valtown deploy fetcher.js --name fpv-deal-hunter-fetcher
-   valtown deploy scraper.js --name fpv-deal-hunter-scraper
-   valtown deploy vendors.js --name fpv-deal-hunter-vendors
-   valtown deploy cache.js --name fpv-deal-hunter-cache
-   ```
-
-4. **Update imports in index.js** to reference your deployed vals:
+3. **Update imports** in your deployed `index.js` val to reference your username:
    ```javascript
    import { fetchAllVendors } from "https://esm.town/v/yourname/fpv-deal-hunter-fetcher";
+   import { parseVendorResponse } from "https://esm.town/v/yourname/fpv-deal-hunter-scraper";
+   // etc...
    ```
 
-5. **Your val is live!**
+4. **Your val is live!**
    - Access at: `https://yourname-fpv-deal-hunter.val.run`
 
-### Manual Deployment via Web Interface
+**Option 3: Via Web Interface**
 
-**Option 2: Via Web Interface**
+For those who prefer the Val.town web UI:
 
 1. Go to [val.town](https://val.town)
 2. Create a new HTTP val
@@ -165,7 +210,22 @@ npm install -g @valtown/sdk
 
 ### Development Workflow
 
-**Local Development:**
+**In GitHub Codespaces or Devcontainer:**
+
+```bash
+# Make changes to code
+npm test                    # Run tests
+
+# Deploy when ready
+bash deploy.sh              # Runs tests + deploys everything
+
+# Or use helpful aliases (in Codespaces/devcontainer)
+vt-test                     # Run tests
+vt-status                   # Check Val.town auth status
+deploy-fpv                  # Quick deploy
+```
+
+**Local Development (outside container):**
 ```bash
 # Make changes to code
 npm test                    # Run tests
